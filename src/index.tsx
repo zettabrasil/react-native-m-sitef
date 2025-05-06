@@ -69,6 +69,7 @@ export type MSitefTransaction = {
   transacoesHabilitadas?: string;
   acessibilidadeVisual?: string;
   timeoutColeta?: string;
+  terminalSitef?: string;
 }
 
 export type { EmitterSubscription };

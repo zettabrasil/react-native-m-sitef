@@ -54,6 +54,11 @@ public class MSitefModule extends ReactContextBaseJavaModule implements Activity
 
         String currentDate = data.getString("data");
         String currentTime = data.getString("hora");
+        String terminalSitef = data.getString("terminalSitef");
+
+        if (terminalSitef != null) {
+            i.putExtra("terminalSitef", terminalSitef);
+        }
 
         i.putExtra("empresaSitef", data.getString("empresaSitef"));
         i.putExtra("enderecoSitef", data.getString("enderecoSitef"));
