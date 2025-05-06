@@ -1,0 +1,17 @@
+{
+  "deno.enable": false,
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "editor.rulers": [
+    80
+  ],
+  "[javascript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  }
+}

@@ -1,0 +1,26 @@
+# Github
+.github
+
+# Husky
+.husky
+
+# VSCode
+.vscode/
+jsconfig.json
+
+node_modules
+lib/node_modules
+scripts
+src
+.editorconfig
+.gitattributes
+.gitignore
+.watchmanconfig
+.yarnrc
+babel.config.js
+CHANGELOG.md
+commitlint.config.js
+lefthook.yml
+LICENSE
+README.md
+yarn.lock
