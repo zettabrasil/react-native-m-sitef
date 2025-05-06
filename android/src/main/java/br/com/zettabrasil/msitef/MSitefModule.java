@@ -3,6 +3,7 @@ package br.com.zettabrasil.msitef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
@@ -14,24 +15,23 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import android.content.Intent;
 import android.app.Activity;
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
+import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 import static android.app.Activity.RESULT_OK;
 import static android.app.Activity.RESULT_CANCELED;
 
-public class MSitefModule extends ReactContextBaseJavaModule {
+public class MSitefModule extends ReactContextBaseJavaModule implements ActivityEventListener {
     private static ReactApplicationContext reactContext;
+    private static final int SITEF_REQUEST_CODE = 4321;
 
     MSitefModule(ReactApplicationContext context) {
         super(context);
         reactContext = context;
+        context.addActivityEventListener(this);
     }
 
     private void sendEvent(ReactContext reactContext, String name, @Nullable WritableMap params) {
@@ -75,40 +75,49 @@ public class MSitefModule extends ReactContextBaseJavaModule {
         return i;
     }
 
-    private void handleActivityResult(ActivityResult result) {
-        WritableMap params = Arguments.createMap();
+    @Override
+    public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
+        if (requestCode == SITEF_REQUEST_CODE) {
+            WritableMap params = Arguments.createMap();
 
-        if (result.getResultCode() == RESULT_OK) {
-            params.putString("type", "finished");
-            params.putString("message", "Transação Concluída");
+            if (resultCode == RESULT_OK) {
+                params.putString("type", "finished");
+                params.putString("message", "Transação Concluída");
 
-            WritableMap data = Arguments.createMap();
-            Intent res = result.getData();
+                WritableMap resultData = Arguments.createMap();
 
-            data.putString("codigoResposta", res.getExtras().getString("CODRESP"));
-            data.putString("dataConfirmacao", res.getExtras().getString("COMP_DADOS_CONF"));
-            data.putString("codigoTransacao", res.getExtras().getString("CODTRANS"));
-            data.putString("tipoParcelamento", res.getExtras().getString("TIPO_PARC"));
-            data.putString("valorTroco", res.getExtras().getString("VLTROCO"));
-            data.putString("redeAutorizadora", res.getExtras().getString("REDE_AUT"));
-            data.putString("bandeira", res.getExtras().getString("BANDEIRA"));
-            data.putString("nsuSitef", res.getExtras().getString("NSU_SITEF"));
-            data.putString("nsuHost", res.getExtras().getString("NSU_HOST"));
-            data.putString("codigoAutorizacao", res.getExtras().getString("COD_AUTORIZACAO"));
-            data.putString("numeroParcelas", res.getExtras().getString("NUM_PARC"));
-            data.putString("viaEstabelecimento", res.getExtras().getString("VIA_ESTABELECIMENTO"));
-            data.putString("viaCliente", res.getExtras().getString("VIA_CLIENTE"));
+                if (data != null && data.getExtras() != null) {
+                    resultData.putString("codigoResposta", data.getExtras().getString("CODRESP"));
+                    resultData.putString("dataConfirmacao", data.getExtras().getString("COMP_DADOS_CONF"));
+                    resultData.putString("codigoTransacao", data.getExtras().getString("CODTRANS"));
+                    resultData.putString("tipoParcelamento", data.getExtras().getString("TIPO_PARC"));
+                    resultData.putString("valorTroco", data.getExtras().getString("VLTROCO"));
+                    resultData.putString("redeAutorizadora", data.getExtras().getString("REDE_AUT"));
+                    resultData.putString("bandeira", data.getExtras().getString("BANDEIRA"));
+                    resultData.putString("nsuSitef", data.getExtras().getString("NSU_SITEF"));
+                    resultData.putString("nsuHost", data.getExtras().getString("NSU_HOST"));
+                    resultData.putString("codigoAutorizacao", data.getExtras().getString("COD_AUTORIZACAO"));
+                    resultData.putString("numeroParcelas", data.getExtras().getString("NUM_PARC"));
+                    resultData.putString("viaEstabelecimento", data.getExtras().getString("VIA_ESTABELECIMENTO"));
+                    resultData.putString("viaCliente", data.getExtras().getString("VIA_CLIENTE"));
+                }
 
-            params.putMap("data", data);
-        } else if (result.getResultCode() == RESULT_CANCELED) {
-            params.putString("type", "canceled");
-            params.putString("message", "Transação Cancelada");
-        } else {
-            params.putString("type", "error");
-            params.putString("message", "Erro na transação");
+                params.putMap("data", resultData);
+            } else if (resultCode == RESULT_CANCELED) {
+                params.putString("type", "canceled");
+                params.putString("message", "Transação Cancelada");
+            } else {
+                params.putString("type", "error");
+                params.putString("message", "Erro na transação");
+            }
+
+            sendEvent(reactContext, "events", params);
         }
+    }
 
-        sendEvent(reactContext, "events", params);
+    @Override
+    public void onNewIntent(Intent intent) {
+        // Não necessário para este caso
     }
 
     @NonNull
@@ -119,13 +128,26 @@ public class MSitefModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void launch(ReadableMap data) {
-        ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(), o -> {
-                    handleActivityResult(o);
-                }
-        );
+        Activity currentActivity = getCurrentActivity();
+        if (currentActivity == null) {
+            Log.e("MSitefModule", "Nenhuma atividade disponível para iniciar a transação");
+            WritableMap params = Arguments.createMap();
+            params.putString("type", "error");
+            params.putString("message", "Nenhuma atividade disponível para iniciar a transação");
+            sendEvent(reactContext, "events", params);
+            return;
+        }
+
         Intent i = getDefaultIntent(data);
-        activityResultLauncher.launch(i);
+        try {
+            currentActivity.startActivityForResult(i, SITEF_REQUEST_CODE);
+        } catch (Exception e) {
+            Log.e("MSitefModule", "Erro ao iniciar a transação: " + e.getMessage());
+            WritableMap params = Arguments.createMap();
+            params.putString("type", "error");
+            params.putString("message", "Erro ao iniciar a transação: " + e.getMessage());
+            sendEvent(reactContext, "events", params);
+        }
     }
 
     public static String getCurrentDate() {
