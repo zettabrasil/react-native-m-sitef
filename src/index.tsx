@@ -6,7 +6,7 @@ import {
 
 const LINKING_ERROR =
   "This is a exclusive Android lib. Does not work on iOS. \n\n" +
-  `The package 'react-native-m-sitef' doesn't seem to be linked. Make sure: \n\n` +
+  "The package 'react-native-m-sitef' doesn't seem to be linked. Make sure: \n\n" +
   "- You rebuilt the app after installing the package\n" +
   "- You are not using Expo Go\n";
 
@@ -57,6 +57,8 @@ export type MSitefTransaction = {
   cnpjCpf: string;
   numeroCupom: string;
   comExterna: string;
+  data: string;
+  hora: string;
   valor?: string;
   tokenRegistroTls?: string;
   operador?: string;
