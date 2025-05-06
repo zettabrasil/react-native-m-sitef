@@ -40,8 +40,8 @@ public class MSitefModule extends ReactContextBaseJavaModule {
             i.putExtra("tokenRegistroTls", data.getString("tokenRegistroTls"));
         }
 
-        const currentDate = data.getString("data");
-        const currentTime = data.getString("hora");
+        String currentDate = data.getString("data");
+        String currentTime = data.getString("hora");
 
         i.putExtra("empresaSitef", data.getString("empresaSitef"));
         i.putExtra("enderecoSitef", data.getString("enderecoSitef"));
