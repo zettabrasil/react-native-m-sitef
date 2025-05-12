@@ -1,6 +1,6 @@
 {
   "name": "@zettabrasil/react-native-m-sitef",
-  "version": "0.2.0-rc.5",
+  "version": "0.2.0-rc.6",
   "description": "Módulo nativo para integração com o Sitef Android",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
