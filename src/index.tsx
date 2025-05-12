@@ -86,6 +86,10 @@ export const MSitef = {
   launch(data: MSitefTransaction) {
     MSitefLib.launch(data);
   },
+
+  printReceipt(receipt: string) {
+    MSitefLib.printReceipt(receipt);
+  },
 };
 
 export default MSitef;

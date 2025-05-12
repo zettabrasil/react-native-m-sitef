@@ -21,21 +21,54 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import br.com.execucao.posmp_api.SmartPosHelper;
+import br.com.execucao.posmp_api.printer.PrinterService;
+import br.com.execucao.posmp_api.store.AppStatus;
+import br.com.execucao.smartPOSService.printer.IOnPrintFinished;
+
 import static android.app.Activity.RESULT_OK;
 import static android.app.Activity.RESULT_CANCELED;
 
 public class MSitefModule extends ReactContextBaseJavaModule implements ActivityEventListener {
     private static ReactApplicationContext reactContext;
     private static final int SITEF_REQUEST_CODE = 4321;
+    private PrinterService printerService;
 
     MSitefModule(ReactApplicationContext context) {
         super(context);
         reactContext = context;
+        initializeSmartPosHelper();
+        initializePrinterService();
         context.addActivityEventListener(this);
     }
 
     private void sendEvent(ReactContext reactContext, String name, @Nullable WritableMap params) {
         reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(name, params);
+    }
+
+    /**
+     * Inicialização da biblioteca auxiliar SmartPOS
+     */
+    private void initializeSmartPosHelper() {
+        if (SmartPosHelper.getInstance() == null) {
+            SmartPosHelper.init(getApplicationContext(), AppStatus.ACTIVE);
+        }
+    }
+
+    /**
+     * Inicializa o serviço da impressora
+     */
+    private void initializePrinterService() {
+        printerService = SmartPosHelper.getInstance().getPrinter();
+        printerService.open();
+
+    }
+
+    /**
+     * Verifica se o serviço de impressora está disponível.
+     */
+    private boolean isPrinterServiceAvailable() {
+        return printerService != null;
     }
 
     private Intent getDefaultIntent(ReadableMap data) {
@@ -154,6 +187,48 @@ public class MSitefModule extends ReactContextBaseJavaModule implements Activity
             sendEvent(reactContext, "events", params);
         }
     }
+
+    /**
+     * Imprime o comprovante como texto, alinhado à direita.
+     */
+    @ReactMethod
+    public void printReceipt(String receipt) {
+        WritableMap params = Arguments.createMap();
+
+        if (!isPrinterServiceAvailable()) {
+            params.putString("type", "error");
+            params.putString("message", "Lib de Impressão: Impressora indisponível");
+            sendEvent(reactContext, "events", params);
+            return;
+        }
+
+        if (isPrinterServiceAvailable()) {
+
+            String formattedReceipt = receipt.replace(": ", ":")
+                    .replace(" T", "T")
+                    .replace(" R", "R")
+                    .replace(" F", "F");
+
+
+            printerService.printText(formattedReceipt,
+                    new IOnPrintFinished.Stub() {
+                        @Override
+                        public void onSuccess() {
+                            params.putString("type", "success");
+                            params.putString("message", "Lib de Impressão: Impressão concluída");
+                            sendEvent(reactContext, "events", params);
+                        }
+
+                        @Override
+                        public void onFailed(int error, String msg) {
+                            params.putString("type", "error");
+                            params.putString("message", "Lib de Impressão: " + msg);
+                            sendEvent(reactContext, "events", params);
+                        }
+                    }
+            );
+        }
+    };
 
     public static String getCurrentDate() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
