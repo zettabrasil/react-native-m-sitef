@@ -88,7 +88,7 @@ dependencies {
   //noinspection GradleDynamicVersion
   implementation "com.facebook.react:react-native:+"
   // libs
-  implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
+  implementation fileTree(dir: 'libs', include: ['*.aar'])
 }
 
 if (isNewArchitectureEnabled()) {
