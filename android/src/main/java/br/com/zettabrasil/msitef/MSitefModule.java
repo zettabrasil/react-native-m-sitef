@@ -37,21 +37,21 @@ public class MSitefModule extends ReactContextBaseJavaModule implements Activity
     MSitefModule(ReactApplicationContext context) {
         super(context);
         reactContext = context;
-        initializeSmartPosHelper();
+        initializeSmartPosHelper(context);
         initializePrinterService();
         context.addActivityEventListener(this);
     }
 
-    private void sendEvent(ReactContext reactContext, String name, @Nullable WritableMap params) {
-        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(name, params);
+    private void sendEvent(ReactContext context, String name, @Nullable WritableMap params) {
+        context.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(name, params);
     }
 
     /**
      * Inicialização da biblioteca auxiliar SmartPOS
      */
-    private void initializeSmartPosHelper() {
+    private void initializeSmartPosHelper(ReactApplicationContext context) {
         if (SmartPosHelper.getInstance() == null) {
-            SmartPosHelper.init(getApplicationContext(), AppStatus.ACTIVE);
+            SmartPosHelper.init(context, AppStatus.ACTIVE);
         }
     }
 
