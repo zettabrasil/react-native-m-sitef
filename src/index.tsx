@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import {
   type EmitterSubscription,
   NativeEventEmitter,
@@ -44,7 +45,7 @@ type EventData = {
   viaCliente: string;
 };
 
-type Handler = {
+export type EventHandler = {
   type: EventTypes;
   message: string;
   data?: EventData;
@@ -77,7 +78,7 @@ export type { EmitterSubscription };
 export const MSitef = {
   addListener(
     event: EventEmitter,
-    handler: (handler: Handler) => void,
+    handler: (handler: EventHandler) => void,
   ): EmitterSubscription {
     const eventEmitter = new NativeEventEmitter(MSitefLib);
     return eventEmitter.addListener(event, handler);
@@ -91,5 +92,23 @@ export const MSitef = {
     MSitefLib.printReceipt(receipt);
   },
 };
+
+export function useMSitef(callback: (event: EventHandler) => void) {
+  const callbackRef = useRef<(event: EventHandler) => void>(() => {});
+
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  useEffect(() => {
+    const sub = MSitef.addListener("events", (event) => {
+      callbackRef.current && callbackRef.current(event);
+    });
+
+    return () => {
+      sub.remove();
+    };
+  }, []);
+}
 
 export default MSitef;
