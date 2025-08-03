@@ -59,8 +59,13 @@ public class MSitefModule extends ReactContextBaseJavaModule implements Activity
      * Inicializa o serviço da impressora
      */
     private void initializePrinterService() {
-        printerService = SmartPosHelper.getInstance().getPrinter();
-        printerService.open();
+        try {
+            printerService = SmartPosHelper.getInstance().getPrinter();
+            printerService.open();
+        } catch (Exception e) {
+            Log.e("MSitefModule", "Erro ao inicializar o serviço da impressora: " + e.getMessage());
+            printerService = null;
+        }
 
     }
 
@@ -162,6 +167,18 @@ public class MSitefModule extends ReactContextBaseJavaModule implements Activity
     @Override
     public String getName() {
         return "MSitef";
+    }
+
+    @ReactMethod
+    public void addListener(String eventName) {
+        // Mantém referência dos listeners ativos
+        // Este método é chamado automaticamente pelo React Native
+    }
+
+    @ReactMethod
+    public void removeListeners(Integer count) {
+        // Remove listeners quando não são mais necessários
+        // Este método é chamado automaticamente pelo React Native
     }
 
     @ReactMethod
