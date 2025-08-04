@@ -73,7 +73,12 @@ public class MSitefModule extends ReactContextBaseJavaModule implements Activity
      * Verifica se o serviço de impressora está disponível.
      */
     private boolean isPrinterServiceAvailable() {
-        return printerService != null;
+        try {
+            return printerService != null && SmartPosHelper.getInstance() != null;
+        } catch (Exception e) {
+            Log.e("MSitefModule", "Erro ao verificar disponibilidade da impressora: " + e.getMessage());
+            return false;
+        }
     }
 
     private Intent getDefaultIntent(ReadableMap data) {
@@ -210,27 +215,25 @@ public class MSitefModule extends ReactContextBaseJavaModule implements Activity
      */
     @ReactMethod
     public void printReceipt(String receipt) {
-        WritableMap params = Arguments.createMap();
-
         if (!isPrinterServiceAvailable()) {
+            WritableMap params = Arguments.createMap();
             params.putString("type", "error");
             params.putString("message", "Lib de Impressão: Impressora indisponível");
             sendEvent(reactContext, "events", params);
             return;
         }
 
-        if (isPrinterServiceAvailable()) {
-
+        try {
             String formattedReceipt = receipt.replace(": ", ":")
                     .replace(" T", "T")
                     .replace(" R", "R")
                     .replace(" F", "F");
 
-
             printerService.printText(formattedReceipt,
                     new IOnPrintFinished.Stub() {
                         @Override
                         public void onSuccess() {
+                            WritableMap params = Arguments.createMap();
                             params.putString("type", "success");
                             params.putString("message", "Lib de Impressão: Impressão concluída");
                             sendEvent(reactContext, "events", params);
@@ -238,14 +241,21 @@ public class MSitefModule extends ReactContextBaseJavaModule implements Activity
 
                         @Override
                         public void onFailed(int error, String msg) {
+                            WritableMap params = Arguments.createMap();
                             params.putString("type", "error");
                             params.putString("message", "Lib de Impressão: " + msg);
                             sendEvent(reactContext, "events", params);
                         }
                     }
             );
+        } catch (Exception e) {
+            Log.e("MSitefModule", "Erro ao tentar imprimir: " + e.getMessage());
+            WritableMap params = Arguments.createMap();
+            params.putString("type", "error");
+            params.putString("message", "Lib de Impressão: Erro inesperado - " + e.getMessage());
+            sendEvent(reactContext, "events", params);
         }
-    };
+    }
 
     public static String getCurrentDate() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
